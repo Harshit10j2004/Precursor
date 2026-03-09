@@ -22,7 +22,6 @@ best_distance = float("inf")
 best_index = None
 
 top = []
-# print(historical_series)
 
 current_norm = normalize_multimetric(current_window)
 
@@ -38,23 +37,50 @@ top.sort(key=lambda x: x[1])
 temp = top[:500]
 # print(temp)
 
+dtw_res = []
+
 for idx, _ in temp:
 
     window = historical_series[idx:idx + window_size]
     window_norm = normalize_multimetric(window)
 
     dist = dtw(current_norm, window_norm)
+    dtw_res.append((idx, dist))
 
-    if dist < best_distance:
-        best_distance = dist
-        best_index = idx
 
-print(best_index)
-print(best_distance)
 
-next_window = historical_series[
-    best_index + window_size :
-    best_index + 2 * window_size
-]
+dtw_res.sort(key=lambda x: x[1])
 
-print(next_window)
+top5 = dtw_res[:5]
+print(top5)
+
+
+future_windows = []
+
+for idx, dist in top5:
+
+    future = historical_series[
+        idx + window_size :
+        idx + 2 * window_size
+    ]
+
+    if len(future) == window_size:
+        future_windows.append((idx, dist, future))
+
+
+for idx, dist, future in future_windows:
+
+    cpu = future[:,0]
+    mem = future[:,1]
+    req = future[:,2]
+
+    cpu_slope = cpu[-1] - cpu[0]
+    mem_slope = mem[-1] - mem[0]
+    req_slope = req[-1] - req[0]
+
+    print("Match:", idx)
+    print("DTW:", dist)
+    print("CPU slope:", cpu_slope)
+    print("Memory slope:", mem_slope)
+    print("Requests slope:", req_slope)
+    print()
